@@ -44,9 +44,40 @@ func Login(c *gin.Context) {
 		if err != nil {
 			panic(err)
 		}
-		c.JSON(http.StatusAccepted, gin.H{"persona": u, "secuencialpersona": secuencialPersona, "token": token})
+		c.JSON(http.StatusAccepted, gin.H{"empleado": u, "secuencialpersona": secuencialPersona, "token": token})
 	} else {
 		c.JSON(http.StatusAccepted, gin.H{"error": "Contraseña Incorrecta!!"})
+	}
+}
+
+func GetEmpleados(c *gin.Context) {
+	var contador int = 0
+	var d models.Empleados
+	var datos []models.Empleados
+
+	query := `select identificacion, nombreUnido from Personas.Persona
+	inner join Nomina.EMPLEADO on EMPLEADO.SECUENCIALPERSONANATURAL = Persona.secuencial
+	where EMPLEADO.CODIGOESTADOEMPLEADO = 'A' 
+	order by nombreUnido asc`
+
+	filas, err := conexion.Session.Query(query)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		contador++
+		errsql := filas.Scan(&d.Identificacion, &d.NombreUnido)
+		if errsql != nil {
+			panic(err)
+		}
+		datos = append(datos, d)
+	}
+
+	if contador > 0 {
+		c.JSON(http.StatusCreated, gin.H{"response": datos})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
 	}
 }
 
@@ -56,11 +87,74 @@ func createToken(userid uint64) (string, error) {
 	atClaims := jwt.MapClaims{}
 	atClaims["authorized"] = true
 	atClaims["user_id"] = userid
-	atClaims["exp"] = time.Now().Add(time.Minute * 30).Unix()
+	atClaims["exp"] = time.Now().Add(time.Hour * 12).Unix()
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	token, err := at.SignedString([]byte("fenix1920"))
 	if err != nil {
 		return "", err
 	}
 	return token, nil
+}
+
+func Validartoken(c *gin.Context) {
+	c.JSON(http.StatusCreated, gin.H{"response": "ok"})
+}
+
+func VerificarSiEsOficialCredito(c *gin.Context) {
+	codigouser := c.Param("codigouser")
+	var contador int = 0
+
+	query := `select * from Seguridades.Usuario
+	inner join Seguridades.UsuarioRol on UsuarioRol.codigoUsuario = Usuario.codigo
+	inner join Seguridades.Rol on Rol.codigo = UsuarioRol.codigoRol
+	where Usuario.codigo = @codigouser and Rol.codigo = '005' and UsuarioRol.estaActivo = 1`
+
+	filas, err := conexion.Session.Query(query, sql.Named("codigouser", codigouser))
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		contador++
+	}
+
+	if contador > 0 {
+		c.JSON(http.StatusCreated, gin.H{"response": "ok"})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
+	}
+}
+
+func GetAsesores(c *gin.Context) {
+	codigouser := c.Param("codigouser")
+	var contador int = 0
+	var d models.Empleados
+	var datos []models.Empleados
+
+	query := `select identificacion, nombreUnido, secuencialOficina from Seguridades.Usuario
+	inner join Seguridades.UsuarioRol on UsuarioRol.codigoUsuario = Usuario.codigo
+	inner join Seguridades.Rol on Rol.codigo = UsuarioRol.codigoRol
+	INNER JOIN Seguridades.Usuario_Complemento ON Seguridades.Usuario_Complemento.codigoUsuario = Seguridades.Usuario.codigo
+			INNER JOIN Personas.Persona ON Persona.secuencial = Usuario_Complemento.secuencialPersona
+	where Rol.codigo = '005' and Rol.estaActivo = 1 and Usuario.estaActivo = 1 and UsuarioRol.estaActivo = 1`
+
+	filas, err := conexion.Session.Query(query, sql.Named("codigouser", codigouser))
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		contador++
+		errsql := filas.Scan(&d.Identificacion, &d.NombreUnido, &d.SecuencialOficina)
+		if errsql != nil {
+			panic(err)
+		}
+		datos = append(datos, d)
+	}
+
+	if contador > 0 {
+		c.JSON(http.StatusCreated, gin.H{"response": datos})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
+	}
 }

@@ -1,8 +1,15 @@
 package models
 
 type Empleados struct {
+	Identificacion    string `json:"identificacion"`
+	NombreUnido       string `json:"nombreUnido"`
+	SecuencialOficina string `json:"secuencialOficina"`
+}
+
+type EmpleadosAsistencias struct {
 	Identificacion string `json:"identificacion"`
 	NombreUnido    string `json:"nombreUnido"`
+	Asistencias    []AsistenciasMarcaciones
 }
 
 type Usuario struct {

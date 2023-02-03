@@ -22,13 +22,14 @@ func Cors() gin.HandlerFunc {
 }
 
 func main() {
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	r.Use(Cors())
 
 	v1 := r.Group("api/")
 	{
 		v1.GET("login-empleado/:codigo/:clave", controller.Login)
+		v1.GET("login-servicios/:usuario/:clave", controller.LoginServicios)
 	}
 
 	v1jwt := r.Group("apijwt/")
@@ -37,6 +38,8 @@ func main() {
 		v1jwt.GET("validartoken", controller.Validartoken)
 
 		v1jwt.GET("empleados", controller.GetEmpleados)
+		v1jwt.GET("verificar-si-oficial-credito/:codigouser", controller.VerificarSiEsOficialCredito)
+		v1jwt.GET("asesores", controller.GetAsesores)
 
 		v1jwt.POST("marcacion", controller.AgregarMarcacion)
 		v1jwt.GET("ultima-marcacion/:idasistencia", controller.Getultimamarcacion)
@@ -48,6 +51,9 @@ func main() {
 		v1jwt.POST("asistencia", controller.AgregarAsistencia)
 		v1jwt.GET("verificar-asistencia/:identificacion/:fecha", controller.Verificarsiexisteasistencia)
 		v1jwt.GET("asistencia-fecha/:identificacion/:fecha", controller.Getfechaasistencia)
+		v1jwt.GET("asistencia-mes-anio-identificacion/:identificacion/:anio/:mes", controller.GetAsistenciaPorMesAnioEmpleado)
+		v1jwt.GET("asistencia-all-empleados/:anio/:mes", controller.GetAsistenciasMarcacionesAllEmpleados)
+		v1jwt.GET("asistencia-all-servicio-profecionales/:anio/:mes", controller.GetAsistenciasMarcacionesAllServiciosProfecionales)
 
 		v1jwt.GET("tipo-permisos", controller.GetTipoPermiso)
 		v1jwt.POST("permiso", controller.AgregarPermiso)
@@ -61,8 +67,21 @@ func main() {
 
 		v1jwt.GET("rostros", controller.GetAllRostros)
 		v1jwt.GET("rostro/:identificacion", controller.Getonerostros)
+
+		v1jwt.POST("detellepermiso", controller.AgregarDetallePermiso)
+		v1jwt.GET("detallepermiso/:mes/:anio", controller.GetDetallePermisos)
+
+		v1jwt.GET("servicios-profesionales", controller.GetAllServiciosProfesionales)
+
+		v1jwt.POST("trabajocampo", controller.AgregarTrabajoCampo)
+		v1jwt.GET("trabajocampo/:identificacion/:mes/:anio", controller.GetAllTrabajoCampoPorIdentificacion)
+		v1jwt.GET("trabajocampo-filtro/:identificacion/:mes/:anio", controller.GetAllTrabajoCampoFiltro)
+
+		v1jwt.GET("skypes", controller.GetAllSkypes)
 	}
 
-	r.Run(":8096")
+	r.RunTLS(":8096", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/fullchain.pem", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/privkey.pem")
+
+	//r.Run(":8096")
 	//r.RunTLS(":8096", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/fullchain.pem", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/privkey.pem")
 }
