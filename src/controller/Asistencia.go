@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jordan-vera/api_asistencia_golang/src/conexion"
+	"github.com/jordan-vera/api_asistencia_golang/src/global"
 	"github.com/jordan-vera/api_asistencia_golang/src/models"
 )
 
@@ -22,7 +23,7 @@ func AgregarAsistencia(c *gin.Context) {
 		panic(err2)
 	}
 
-	sqlQ.Exec(data.IDENTIFICACION, data.FECHA, data.MES, data.ANIO, data.DIA, data.NOMBREDIA, data.JUSTIFICACION, data.HORASJUSTIFICADAS)
+	sqlQ.Exec(data.IDENTIFICACION, global.FechaActual(), data.MES, data.ANIO, data.DIA, data.NOMBREDIA, data.JUSTIFICACION, data.HORASJUSTIFICADAS)
 	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
 }
 
@@ -167,7 +168,7 @@ func GetAsistenciaPorMesAnioEmpleado(c *gin.Context) {
 	var d models.AsistenciasMarcaciones
 	var datos []models.AsistenciasMarcaciones
 
-	query := `SELECT * FROM asistencias WHERE IDENTIFICACION = ? AND MES = ? AND ANIO = ?`
+	query := `SELECT * FROM asistencias WHERE IDENTIFICACION = ? AND MES = ? AND ANIO = ? order by IDASISTENCIA DESC`
 	filas, err := conexion.SessionMysql.Query(query, identificacion, mes, anio)
 	if err != nil {
 		panic(err)
@@ -210,6 +211,24 @@ func obtenerMarcaciones(idasistencia int) []models.Marcaciones {
 	}
 
 	return datos
+}
+
+func JustificarAsistencia(c *gin.Context) {
+	var data models.AsistenciasJustificacion
+
+	err := c.ShouldBindJSON(&data)
+	if err != nil {
+		panic(err)
+	}
+
+	query, err2 := conexion.SessionMysql.Prepare("update asistencias set JUSTIFICACION = ?, HORASJUSTIFICADAS = ? where IDASISTENCIA = ?")
+	if err2 != nil {
+		panic(err2)
+	}
+
+	query.Exec(data.JUSTIFICACION, data.HORASJUSTIFICADAS, data.IDASISTENCIA)
+
+	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
 }
 
 /*

@@ -12,6 +12,12 @@ type Asistencias struct {
 	HORASJUSTIFICADAS int    `json:"HORASJUSTIFICADAS"`
 }
 
+type AsistenciasJustificacion struct {
+	IDASISTENCIA      int    `json:"IDASISTENCIA"`
+	JUSTIFICACION     string `json:"JUSTIFICACION"`
+	HORASJUSTIFICADAS int    `json:"HORASJUSTIFICADAS"`
+}
+
 type AsistenciasMarcaciones struct {
 	IDASISTENCIA      int    `json:"IDASISTENCIA"`
 	IDENTIFICACION    string `json:"IDENTIFICACION"`

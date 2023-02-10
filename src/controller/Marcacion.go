@@ -27,7 +27,7 @@ func AgregarMarcacion(c *gin.Context) {
 		panic(err2)
 	}
 
-	sqlQ.Exec(data.IDASISTENCIA, data.HORA, data.TIPO, data.IDSUCURSAL, data.IMAGEN)
+	sqlQ.Exec(data.IDASISTENCIA, global.HoraActual(), data.TIPO, data.IDSUCURSAL, data.IMAGEN)
 	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
 }
 

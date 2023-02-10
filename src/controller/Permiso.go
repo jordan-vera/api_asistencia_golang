@@ -131,6 +131,40 @@ func EliminarPermiso(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"status": http.StatusCreated, "message": "registro eliminado!"})
 }
 
+func GetAllPermisoFecha(c *gin.Context) {
+	var contador int = 0
+	var d models.Permisos
+	var datos []models.Permisos
+	identificacion := c.Param("identificacion")
+	mes := c.Param("mes")
+	anio := c.Param("anio")
+
+	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo  from permisos 
+	inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
+	where identificacion = ? and mes = ? and anio = ?
+	order by idpermiso desc`
+
+	filas, err := conexion.SessionMysql.Query(query, identificacion, mes, anio)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		contador++
+		errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo)
+		if errsql != nil {
+			panic(err)
+		}
+		datos = append(datos, d)
+	}
+
+	if contador > 0 {
+		c.JSON(http.StatusCreated, gin.H{"response": datos})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
+	}
+}
+
 func GetAllPermisosadmin(c *gin.Context) {
 	var contador int = 0
 	var d models.Permisos
