@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jordan-vera/api_asistencia_golang/src/conexion"
@@ -20,15 +21,57 @@ func AgregarMarcacion(c *gin.Context) {
 		panic(err)
 	}
 
-	saveimage(data.FILE, data.IMAGEN)
+	if verificarSiMarcacionEsSeguida(data.IDASISTENCIA) == false {
+		saveimage(data.FILE, data.IMAGEN)
 
-	sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO marcaciones (IDASISTENCIA, HORA, TIPO, IDSUCURSAL, IMAGEN) VALUES (?,?,?,?,?)")
-	if err2 != nil {
-		panic(err2)
+		sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO marcaciones (IDASISTENCIA, HORA, TIPO, IDSUCURSAL, IMAGEN) VALUES (?,?,?,?,?)")
+		if err2 != nil {
+			panic(err2)
+		}
+
+		sqlQ.Exec(data.IDASISTENCIA, global.HoraActual(), data.TIPO, data.IDSUCURSAL, data.IMAGEN)
 	}
 
-	sqlQ.Exec(data.IDASISTENCIA, global.HoraActual(), data.TIPO, data.IDSUCURSAL, data.IMAGEN)
 	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
+}
+
+func verificarSiMarcacionEsSeguida(idasistencia int) bool {
+	var respuesta bool = false
+	var hora string = ""
+	var contador int = 0
+	query := `SELECT HORA FROM marcaciones WHERE IDASISTENCIA = ? ORDER BY IDMARCACION DESC LIMIT 1`
+	filas, err := conexion.SessionMysql.Query(query, idasistencia)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		contador++
+		errsql := filas.Scan(&hora)
+		if errsql != nil {
+			log.Fatal(errsql)
+		}
+	}
+
+	if contador > 0 {
+		partesHora := strings.Split(hora, ":")
+		partesHoraActual := strings.Split(global.HoraActual(), ":")
+
+		if partesHora[0] == partesHoraActual[0] {
+			if partesHora[1] == partesHoraActual[1] {
+				respuesta = true
+			} else {
+				respuesta = false
+			}
+		} else {
+			respuesta = false
+		}
+
+	} else {
+		respuesta = false
+	}
+
+	return respuesta
 }
 
 func saveimage(archivo string, foto string) {

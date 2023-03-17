@@ -117,7 +117,7 @@ func GetAsistenciasMarcacionesAllServiciosProfecionales(c *gin.Context) {
 	var d models.ServiciosProfesionalesAsistencia
 	var datos []models.ServiciosProfesionalesAsistencia
 
-	query := `select * from serviciosprofecionales`
+	query := `select * from serviciosprofecionales where estado = 1`
 
 	filas, err := conexion.SessionMysql.Query(query)
 	if err != nil {
@@ -125,7 +125,7 @@ func GetAsistenciasMarcacionesAllServiciosProfecionales(c *gin.Context) {
 	}
 
 	for filas.Next() {
-		errsql := filas.Scan(&d.Idservicio, &d.Nombres, &d.Usuario, &d.Clave, &d.Identificacion, &d.Idsucursal)
+		errsql := filas.Scan(&d.Idservicio, &d.Nombres, &d.Usuario, &d.Clave, &d.Identificacion, &d.Idsucursal, &d.Estado)
 		if errsql != nil {
 			panic(err)
 		}
@@ -229,6 +229,34 @@ func JustificarAsistencia(c *gin.Context) {
 	query.Exec(data.JUSTIFICACION, data.HORASJUSTIFICADAS, data.IDASISTENCIA)
 
 	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
+}
+
+func GetAsistenciaAllPorFecha(c *gin.Context) {
+	fecha := c.Param("fecha")
+	var contador int = 0
+	var d models.Asistencias
+	var datos []models.Asistencias
+
+	query := `SELECT * FROM asistencias WHERE FECHA = ?`
+	filas, err := conexion.SessionMysql.Query(query, fecha)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		contador++
+		errsql := filas.Scan(&d.IDASISTENCIA, &d.IDENTIFICACION, &d.FECHA, &d.MES, &d.ANIO, &d.DIA, &d.NOMBREDIA, &d.JUSTIFICACION, &d.HORASJUSTIFICADAS)
+		if errsql != nil {
+			log.Fatal(errsql)
+		}
+		datos = append(datos, d)
+	}
+
+	if contador > 0 {
+		c.JSON(http.StatusCreated, gin.H{"response": datos})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"errors": "No hay datos"})
+	}
 }
 
 /*

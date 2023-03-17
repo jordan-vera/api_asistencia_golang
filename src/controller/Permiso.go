@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jordan-vera/api_asistencia_golang/src/conexion"
@@ -141,10 +142,10 @@ func GetAllPermisoFecha(c *gin.Context) {
 
 	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo  from permisos 
 	inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
-	where identificacion = ? and mes = ? and anio = ?
+	where identificacion = ?
 	order by idpermiso desc`
 
-	filas, err := conexion.SessionMysql.Query(query, identificacion, mes, anio)
+	filas, err := conexion.SessionMysql.Query(query, identificacion)
 	if err != nil {
 		panic(err)
 	}
@@ -155,7 +156,9 @@ func GetAllPermisoFecha(c *gin.Context) {
 		if errsql != nil {
 			panic(err)
 		}
-		datos = append(datos, d)
+		if verificarSiMesAnio(mes, anio, d.Fechasolicitud) == true {
+			datos = append(datos, d)
+		}
 	}
 
 	if contador > 0 {
@@ -163,6 +166,35 @@ func GetAllPermisoFecha(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
 	}
+}
+
+func verificarSiMesAnio(mes string, anio string, fechasolicitud string) bool {
+	var resultado bool = false
+	if mes == "1" {
+		mes = "01"
+	} else if mes == "2" {
+		mes = "02"
+	} else if mes == "3" {
+		mes = "03"
+	} else if mes == "4" {
+		mes = "04"
+	} else if mes == "5" {
+		mes = "05"
+	} else if mes == "6" {
+		mes = "06"
+	} else if mes == "7" {
+		mes = "07"
+	} else if mes == "8" {
+		mes = "08"
+	} else if mes == "9" {
+		mes = "09"
+	}
+	parteFechaSolicitud := strings.Split(fechasolicitud, "-")
+
+	if parteFechaSolicitud[1] == mes && parteFechaSolicitud[0] == anio {
+		resultado = true
+	}
+	return resultado
 }
 
 func GetAllPermisosadmin(c *gin.Context) {

@@ -62,9 +62,61 @@ func GetBloqueosAllPorEstado(c *gin.Context) {
 	var d models.Bloqueos
 	var datos []models.Bloqueos
 
-	query := `select * from bloqueo where mes = ? and anio = ? and estado = ?`
+	query := `select * from bloqueo where mes = ? and anio = ? and estado = ? order by idbloqueo desc`
 
 	filas, err := conexion.SessionMysql.Query(query, mes, anio, estado)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora)
+		if errsql != nil {
+			panic(err)
+		}
+		datos = append(datos, d)
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"response": datos})
+}
+
+func GetBloqueosAllPorFecha(c *gin.Context) {
+	mes := c.Param("mes")
+	anio := c.Param("anio")
+	dia := c.Param("dia")
+
+	var d models.Bloqueos
+	var datos []models.Bloqueos
+
+	query := `select * from bloqueo where mes = ? and anio = ? and dia = ?`
+
+	filas, err := conexion.SessionMysql.Query(query, mes, anio, dia)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora)
+		if errsql != nil {
+			panic(err)
+		}
+		datos = append(datos, d)
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"response": datos})
+}
+
+func GetBloqueosIdentificacionMesAnio(c *gin.Context) {
+	mes := c.Param("mes")
+	anio := c.Param("anio")
+	identificacion := c.Param("identificacion")
+
+	var d models.Bloqueos
+	var datos []models.Bloqueos
+
+	query := `select * from bloqueo where mes = ? and anio = ? and identificacion = ?`
+
+	filas, err := conexion.SessionMysql.Query(query, mes, anio, identificacion)
 	if err != nil {
 		panic(err)
 	}

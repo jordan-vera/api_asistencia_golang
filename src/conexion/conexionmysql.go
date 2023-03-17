@@ -11,7 +11,7 @@ import (
 var SessionMysql *sql.DB
 
 var usuario = "root"
-var pass = "9595K9595k." //
+var pass = "9595K9595k." //9595K9595k.
 var host = "tcp(127.0.0.1:3306)"
 var nombreBaseDeDatos = "control_asistencias"
 

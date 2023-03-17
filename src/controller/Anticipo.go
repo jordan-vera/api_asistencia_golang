@@ -95,6 +95,32 @@ func GetAnticiposPorIdentificacion(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"response": datos})
 }
 
+func GetAnticiposPorIdentificacionMesAnio(c *gin.Context) {
+
+	var d models.Anticipos
+	var datos []models.Anticipos
+	identificacion := c.Param("identificacion")
+	mes := c.Param("mes")
+	anio := c.Param("anio")
+
+	query := `select * from solicitud_anticipos_sueldos where identificacion = ? and mes = ? and anio = ?`
+
+	filas, err := conexion.SessionMysql.Query(query, identificacion, mes, anio)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		errsql := filas.Scan(&d.Idanticipo, &d.Fecha, &d.Identificacion, &d.Cantidadanticipo, &d.Motivo_si_es_segundo, &d.Meses_a_deducir, &d.Anio, &d.Mes, &d.Dia, &d.Estodogerente)
+		if errsql != nil {
+			panic(err)
+		}
+		datos = append(datos, d)
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"response": datos})
+}
+
 func AutorizarAnticiposGerente(c *gin.Context) {
 	idanticipo := c.Param("idanticipo")
 

@@ -110,3 +110,34 @@ func GetAllTrabajoCampoFiltro(c *gin.Context) {
 		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
 	}
 }
+
+func GetAllTrabajoCampoPorFecha(c *gin.Context) {
+	var contador int = 0
+	var d models.Trabajocampo
+	var datos []models.Trabajocampo
+	mes := c.Param("mes")
+	anio := c.Param("anio")
+	dia := c.Param("dia")
+
+	query := `select * from trabajocampo where mes = ? and anio = ? and dia = ?`
+
+	filas, err := conexion.SessionMysql.Query(query, mes, anio, dia)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		contador++
+		errsql := filas.Scan(&d.Idcampo, &d.Identificacion, &d.Fecha, &d.Comentario, &d.Dia, &d.Mes, &d.Anio)
+		if errsql != nil {
+			panic(err)
+		}
+		datos = append(datos, d)
+	}
+
+	if contador > 0 {
+		c.JSON(http.StatusCreated, gin.H{"response": datos})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
+	}
+}

@@ -7,6 +7,7 @@ type ServiciosProfesionales struct {
 	Clave          string `json:"clave"`
 	Identificacion string `json:"identificacion"`
 	Idsucursal     int    `json:"idsucursal"`
+	Estado         int    `json:"estado"`
 }
 
 type ServiciosProfesionalesAsistencia struct {
@@ -16,5 +17,6 @@ type ServiciosProfesionalesAsistencia struct {
 	Clave          string `json:"clave"`
 	Identificacion string `json:"identificacion"`
 	Idsucursal     int    `json:"idsucursal"`
+	Estado         int    `json:"estado"`
 	Asistencias    []AsistenciasMarcaciones
 }

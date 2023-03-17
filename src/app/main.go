@@ -55,6 +55,7 @@ func main() {
 		v1jwt.GET("asistencia-all-empleados/:anio/:mes", controller.GetAsistenciasMarcacionesAllEmpleados)
 		v1jwt.GET("asistencia-all-servicio-profecionales/:anio/:mes", controller.GetAsistenciasMarcacionesAllServiciosProfecionales)
 		v1jwt.POST("justificar-asistencia", controller.JustificarAsistencia)
+		v1jwt.GET("asistencias-por-fecha/:fecha", controller.GetAsistenciaAllPorFecha)
 
 		v1jwt.GET("tipo-permisos", controller.GetTipoPermiso)
 		v1jwt.POST("permiso", controller.AgregarPermiso)
@@ -72,12 +73,16 @@ func main() {
 
 		v1jwt.POST("detellepermiso", controller.AgregarDetallePermiso)
 		v1jwt.GET("detallepermiso/:mes/:anio", controller.GetDetallePermisos)
+		v1jwt.GET("detallepermiso-fecha/:mes/:anio/:dia", controller.GetDetallePermisosFecha)
 
 		v1jwt.GET("servicios-profesionales", controller.GetAllServiciosProfesionales)
+
+		v1jwt.POST("busqueda", controller.AgregarBusqueda)
 
 		v1jwt.POST("trabajocampo", controller.AgregarTrabajoCampo)
 		v1jwt.GET("trabajocampo/:identificacion/:mes/:anio", controller.GetAllTrabajoCampoPorIdentificacion)
 		v1jwt.GET("trabajocampo-filtro/:identificacion/:mes/:anio", controller.GetAllTrabajoCampoFiltro)
+		v1jwt.GET("trabajocampo-fecha/:mes/:anio/:dia", controller.GetAllTrabajoCampoPorFecha)
 
 		v1jwt.GET("skypes", controller.GetAllSkypes)
 
@@ -85,18 +90,21 @@ func main() {
 		v1jwt.GET("solicitudes-anticipos-pendientes", controller.GetAnticiposPendientes)
 		v1jwt.GET("solicitudes-anticipos-por-estado/:estado", controller.GetAnticiposPorEstadoGerente)
 		v1jwt.GET("solicitudes-anticipos-identificacion/:identificacion", controller.GetAnticiposPorIdentificacion)
+		v1jwt.GET("solicitudes-anticipos-identificacion-mes-anio/:identificacion/:mes/:anio", controller.GetAnticiposPorIdentificacionMesAnio)
 		v1jwt.GET("update-anticipos-gerente/:idanticipo", controller.AutorizarAnticiposGerente)
 		v1jwt.GET("solicitud-anticipo-delete/:idanticipo", controller.EliminarAnticipo)
 
 		v1jwt.POST("bloqueo", controller.AgregarBlqueo)
 		v1jwt.GET("bloqueos/:mes/:anio", controller.GetBloqueosAll)
 		v1jwt.GET("bloqueos-por-estado/:mes/:anio/:estado", controller.GetBloqueosAllPorEstado)
+		v1jwt.GET("bloqueos-por-fecha/:mes/:anio/:dia", controller.GetBloqueosAllPorFecha)
+		v1jwt.GET("bloqueos-por-identificacion-mes-anio/:mes/:anio/:identificacion", controller.GetBloqueosIdentificacionMesAnio)
 		v1jwt.GET("verificar-si-puede-marcar/:identificacion", controller.VerificarsiPuedeMarcarAsistencia)
 		v1jwt.GET("autorizar-bloqueo/:idbloqueo", controller.AutorizarBloqueos)
 	}
 
 	r.RunTLS(":8096", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/fullchain.pem", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/privkey.pem")
 
-	//r.Run(":8096")
+	//r.Run(":8097")
 	//r.RunTLS(":8096", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/fullchain.pem", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/privkey.pem")
 }

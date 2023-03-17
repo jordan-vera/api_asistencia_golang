@@ -24,7 +24,7 @@ func LoginServicios(c *gin.Context) {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&u.Idservicio, &u.Nombres, &u.Usuario, &u.Clave, &u.Identificacion, &u.Idsucursal)
+		errsql := filas.Scan(&u.Idservicio, &u.Nombres, &u.Usuario, &u.Clave, &u.Identificacion, &u.Idsucursal, &u.Estado)
 		if errsql != nil {
 			panic(errsql)
 		}
@@ -46,7 +46,7 @@ func GetAllServiciosProfesionales(c *gin.Context) {
 	var d models.ServiciosProfesionales
 	var datos []models.ServiciosProfesionales
 
-	query := `select idservicio, nombres, usuario, identificacion, idsucursal from serviciosprofecionales`
+	query := `select idservicio, nombres, usuario, identificacion, idsucursal from serviciosprofecionales where estado = 1`
 
 	filas, err := conexion.SessionMysql.Query(query)
 	if err != nil {
