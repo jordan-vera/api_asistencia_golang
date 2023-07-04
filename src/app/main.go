@@ -89,6 +89,7 @@ func main() {
 		v1jwt.POST("solicitud-anticipo", controller.AgregarAnticipo)
 		v1jwt.GET("solicitudes-anticipos-pendientes", controller.GetAnticiposPendientes)
 		v1jwt.GET("solicitudes-anticipos-por-estado/:estado", controller.GetAnticiposPorEstadoGerente)
+		v1jwt.GET("get-numerocliente/:identificacion", controller.GetNumerocliente)
 		v1jwt.GET("solicitudes-anticipos-identificacion/:identificacion", controller.GetAnticiposPorIdentificacion)
 		v1jwt.GET("solicitudes-anticipos-identificacion-mes-anio/:identificacion/:mes/:anio", controller.GetAnticiposPorIdentificacionMesAnio)
 		v1jwt.GET("update-anticipos-gerente/:idanticipo", controller.AutorizarAnticiposGerente)

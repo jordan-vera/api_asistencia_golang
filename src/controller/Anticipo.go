@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -119,6 +120,32 @@ func GetAnticiposPorIdentificacionMesAnio(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"response": datos})
+}
+
+func GetNumerocliente(c *gin.Context) {
+
+	var numeroCliente int
+	identificacion := c.Param("identificacion")
+
+	query := `
+				SELECT numeroCliente FROM Personas.Persona
+				INNER JOIN Clientes.Cliente ON Cliente.secuencialPersona = Persona.secuencial
+				WHERE identificacion = @identificacion
+			`
+
+	filas, err := conexion.Session.Query(query, sql.Named("identificacion", identificacion))
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		errsql := filas.Scan(&numeroCliente)
+		if errsql != nil {
+			panic(err)
+		}
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"response": numeroCliente})
 }
 
 func AutorizarAnticiposGerente(c *gin.Context) {
