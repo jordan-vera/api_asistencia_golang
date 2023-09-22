@@ -8,4 +8,5 @@ type Bloqueos struct {
 	Dia            int    `json:"dia"`
 	Estado         int    `json:"estado"`
 	Hora           string `json:"hora"`
+	Autorizador    string `json:"autorizador"`
 }

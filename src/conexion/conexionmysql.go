@@ -10,10 +10,23 @@ import (
 
 var SessionMysql *sql.DB
 
-var usuario = "root"
+var usuario = "jordan"
 var pass = "9595K9595k." //
+var host = "tcp(192.100.10.49:3306)"
+var nombreBaseDeDatos = "control_asistencias"
+
+/*
+var usuario = "jordan"
+var pass = "9595K9595k." //
+var host = "tcp(192.100.10.49:3306)"
+var nombreBaseDeDatos = "control_asistencias"
+
+
+var usuario = "root"
+var pass = "" //
 var host = "tcp(127.0.0.1:3306)"
 var nombreBaseDeDatos = "control_asistencias"
+*/
 
 func init() {
 	ConnectMysql()

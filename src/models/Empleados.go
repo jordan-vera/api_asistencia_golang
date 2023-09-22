@@ -20,3 +20,10 @@ type Usuario struct {
 	Numeroverificador int    `json:"numeroVerificador"`
 	Identificacion    string `json:"identificacion"`
 }
+
+type EmpleadosConVacacionesDetalle struct {
+	Identificacion    string `json:"identificacion"`
+	NombreUnido       string `json:"nombreUnido"`
+	SecuencialOficina string `json:"secuencialOficina"`
+	Vacaciones        VacacionesDetalleFilter
+}

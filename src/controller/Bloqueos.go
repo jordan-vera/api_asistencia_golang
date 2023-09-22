@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jordan-vera/api_asistencia_golang/src/conexion"
@@ -18,12 +19,12 @@ func AgregarBlqueo(c *gin.Context) {
 	}
 
 	if verificarSiYaTieneBloqueo(data.Anio, data.Mes, data.Dia, data.Identificacion) == false {
-		sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO bloqueo (identificacion, dia, mes, anio, estado, hora) VALUES (?,?,?,?,?,?)")
+		sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO bloqueo (identificacion, dia, mes, anio, estado, hora, autorizador) VALUES (?,?,?,?,?,?,?)")
 		if err2 != nil {
 			panic(err2)
 		}
 
-		sqlQ.Exec(data.Identificacion, data.Dia, data.Mes, data.Anio, 0, global.HoraActual())
+		sqlQ.Exec(data.Identificacion, data.Dia, data.Mes, data.Anio, 0, global.HoraActual(), data.Autorizador)
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
@@ -44,7 +45,7 @@ func GetBloqueosAll(c *gin.Context) {
 	}
 
 	for filas.Next() {
-		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora)
+		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora, &d.Autorizador)
 		if errsql != nil {
 			panic(err)
 		}
@@ -70,7 +71,7 @@ func GetBloqueosAllPorEstado(c *gin.Context) {
 	}
 
 	for filas.Next() {
-		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora)
+		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora, &d.Autorizador)
 		if errsql != nil {
 			panic(err)
 		}
@@ -96,7 +97,7 @@ func GetBloqueosAllPorFecha(c *gin.Context) {
 	}
 
 	for filas.Next() {
-		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora)
+		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora, &d.Autorizador)
 		if errsql != nil {
 			panic(err)
 		}
@@ -122,7 +123,7 @@ func GetBloqueosIdentificacionMesAnio(c *gin.Context) {
 	}
 
 	for filas.Next() {
-		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora)
+		errsql := filas.Scan(&d.Idbloqueo, &d.Identificacion, &d.Dia, &d.Mes, &d.Anio, &d.Estado, &d.Hora, &d.Autorizador)
 		if errsql != nil {
 			panic(err)
 		}
@@ -179,9 +180,25 @@ func verificarSiEstaPuntual() bool {
 	minutoSistema := global.NumMinutoActual()
 	horaBD := 0
 	minutosBD := 0
+	tipoDia := ""
 
-	query := `SELECT hora, minuto FROM horaentrada LIMIT 1`
-	filas, err := conexion.SessionMysql.Query(query)
+	var Dias = []string{"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"}
+
+	t, err := time.Parse("2006-01-02", global.FechaActual())
+	if err != nil {
+		panic(err)
+	}
+
+	dia := Dias[t.Weekday()]
+
+	if dia == "Sábado" || dia == "Domingo" {
+		tipoDia = "finsemana"
+	} else {
+		tipoDia = "entresemana"
+	}
+
+	query := `SELECT hora, minuto FROM horaentrada where tipo = ? LIMIT 1`
+	filas, err := conexion.SessionMysql.Query(query, tipoDia)
 	if err != nil {
 		panic(err)
 	}
@@ -246,12 +263,12 @@ func VerificarsiPuedeMarcarAsistencia(c *gin.Context) {
 					resultado = "BLOQUEADO"
 				}
 			} else {
-				sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO bloqueo (identificacion, dia, mes, anio, estado, hora) VALUES (?,?,?,?,?,?)")
+				sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO bloqueo (identificacion, dia, mes, anio, estado, hora, autorizador) VALUES (?,?,?,?,?,?,?)")
 				if err2 != nil {
 					panic(err2)
 				}
 
-				sqlQ.Exec(identificacion, global.NumDiaActual(), global.NumMesActual(), global.NumAnioActual(), 0, global.HoraActual())
+				sqlQ.Exec(identificacion, global.NumDiaActual(), global.NumMesActual(), global.NumAnioActual(), 0, global.HoraActual(), "")
 				resultado = "BLOQUEADO"
 			}
 		}
@@ -261,13 +278,14 @@ func VerificarsiPuedeMarcarAsistencia(c *gin.Context) {
 
 func AutorizarBloqueos(c *gin.Context) {
 	idbloqueo := c.Param("idbloqueo")
+	usuario := c.Param("usuario")
 
-	query, err2 := conexion.SessionMysql.Prepare("update bloqueo set estado = 1 where idbloqueo = ?")
+	query, err2 := conexion.SessionMysql.Prepare("update bloqueo set estado = 1, autorizador = ?  where idbloqueo = ?")
 	if err2 != nil {
 		panic(err2)
 	}
 
-	query.Exec(idbloqueo)
+	query.Exec(usuario, idbloqueo)
 
 	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
 }

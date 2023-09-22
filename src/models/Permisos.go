@@ -12,6 +12,7 @@ type Permisos struct {
 	Tiempoestimado string `json:"tiempoestimado"`
 	Tipo           string `json:"tipo"`
 	Numerodia      int    `json:"numerodia"`
+	Autorizador    string `json:"autorizador"`
 }
 
 type Tipopermisos struct {

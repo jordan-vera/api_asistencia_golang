@@ -161,6 +161,19 @@ func AutorizarAnticiposGerente(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
 }
 
+func NegarAnticiposGerente(c *gin.Context) {
+	idanticipo := c.Param("idanticipo")
+
+	query, err2 := conexion.SessionMysql.Prepare("update solicitud_anticipos_sueldos set estodogerente = 'NEGADO' where idanticipo = ?")
+	if err2 != nil {
+		panic(err2)
+	}
+
+	query.Exec(idanticipo)
+
+	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
+}
+
 func EliminarAnticipo(c *gin.Context) {
 	idanticipo := c.Param("idanticipo")
 

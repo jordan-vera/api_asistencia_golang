@@ -16,7 +16,7 @@ func LoginServicios(c *gin.Context) {
 
 	u := models.ServiciosProfesionales{}
 
-	query := `select * from serviciosprofecionales where usuario = ? and clave = MD5(?)`
+	query := `SELECT * FROM serviciosprofecionales WHERE usuario = ? AND clave = MD5(?) AND estado = 1`
 	filas, errsql := conexion.SessionMysql.Query(query, usuario, clave)
 	if errsql != nil {
 		panic(errsql)
@@ -66,5 +66,82 @@ func GetAllServiciosProfesionales(c *gin.Context) {
 		c.JSON(http.StatusCreated, gin.H{"response": datos})
 	} else {
 		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
+	}
+}
+
+func GetAllServiciosProfesionalesAll(c *gin.Context) {
+	var contador int = 0
+	var d models.ServiciosProfesionales
+	var datos []models.ServiciosProfesionales
+
+	query := `select idservicio, nombres, usuario, identificacion, idsucursal from serviciosprofecionales`
+
+	filas, err := conexion.SessionMysql.Query(query)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		contador++
+		errsql := filas.Scan(&d.Idservicio, &d.Nombres, &d.Usuario, &d.Identificacion, &d.Idsucursal)
+		if errsql != nil {
+			panic(err)
+		}
+		datos = append(datos, d)
+	}
+
+	if contador > 0 {
+		c.JSON(http.StatusCreated, gin.H{"response": datos})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
+	}
+}
+
+func GetServiciosProfesionalesConHorarioAlmuerzo(c *gin.Context) {
+	var contador int = 0
+	var d models.ServiciosProfesionales
+	var datos []models.ServiciosProfesionales
+
+	query := `SELECT idservicio, nombres, usuario, identificacion, idsucursal FROM serviciosprofecionales WHERE estado = 1`
+
+	filas, err := conexion.SessionMysql.Query(query)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		contador++
+		errsql := filas.Scan(&d.Idservicio, &d.Nombres, &d.Usuario, &d.Identificacion, &d.Idsucursal)
+		if errsql != nil {
+			panic(err)
+		}
+
+		if verificarSiTieneAsignadoHorarioAlmuerzo(d.Identificacion) == false {
+			datos = append(datos, d)
+		}
+	}
+
+	if contador > 0 {
+		c.JSON(http.StatusCreated, gin.H{"response": datos})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
+	}
+}
+
+func InactivarServicioProfesional(c *gin.Context) {
+	var errorGeneral error = nil
+	idservicio := c.Param("idservicio")
+
+	query, err2 := conexion.SessionMysql.Prepare("update serviciosprofecionales set estado = 0 where idservicio = ?")
+	if err2 != nil {
+		panic(err2)
+	}
+
+	query.Exec(idservicio)
+
+	if errorGeneral != nil {
+		c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"error": errorGeneral})
 	}
 }
