@@ -46,6 +46,7 @@ func main() {
 		v1jwt.GET("empleados-sin-horarios-almuerzo", controller.GetEmpleadosConHorarioAlmuerzo)
 
 		v1jwt.POST("marcacion", controller.AgregarMarcacion)
+		v1jwt.POST("marcacion-general/:identificacion", controller.RealizarMarcacionGeneral)
 		v1jwt.GET("ultima-marcacion/:idasistencia", controller.Getultimamarcacion)
 		v1jwt.GET("marcacioneshoy/:idasistencia", controller.GetMarcacionesHoy)
 
