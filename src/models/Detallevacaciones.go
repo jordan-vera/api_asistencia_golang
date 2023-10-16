@@ -12,8 +12,6 @@ type VacacionesDetalleMesAnio struct {
 	Idvacaciones   int    `json:"idvacaciones"`
 	Identificacion string `json:"identificacion"`
 	Cantidaddias   int    `json:"cantidaddias"`
-	Fechainicio    string `json:"fechainicio"`
-	Fechafin       string `json:"fechafin"`
 	Estado         string `json:"estado"`
 	Numerodia      int    `json:"numerodia"`
 	Mes            int    `json:"mes"`

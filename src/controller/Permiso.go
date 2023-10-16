@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -17,12 +18,16 @@ func AgregarPermiso(c *gin.Context) {
 		panic(err)
 	}
 
-	sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO permisos (idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, autorizador) VALUES (?,?,?,?,?,?,?,?,?)")
+	sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO permisos (idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, autorizador, calculadoenvacaciones, escargovacaciones) VALUES (?,?,?,?,?,?,?,?,?,?, ?)")
 	if err2 != nil {
 		panic(err2)
 	}
 
-	res, errorr := sqlQ.Exec(data.Idtipopermiso, data.Identificacion, data.Desde, data.Hasta, data.Motivo, data.Estadojefe, data.Fechasolicitud, data.Tiempoestimado, "")
+	if data.Idtipopermiso == 19 {
+		data.Escargovacaciones = 1
+	}
+
+	res, errorr := sqlQ.Exec(data.Idtipopermiso, data.Identificacion, data.Desde, data.Hasta, data.Motivo, data.Estadojefe, data.Fechasolicitud, data.Tiempoestimado, "", 0, data.Escargovacaciones)
 	if errorr != nil {
 		panic(errorr)
 	}
@@ -66,7 +71,7 @@ func GetAllPermisos(c *gin.Context) {
 	var d models.Permisos
 	var datos []models.Permisos
 
-	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador from permisos
+	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador, calculadoenvacaciones, escargovacaciones from permisos
 	            inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
 	            where identificacion = ?`
 
@@ -77,7 +82,7 @@ func GetAllPermisos(c *gin.Context) {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador)
+		errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador, &d.Calculadoenvacaciones, &d.Escargovacaciones)
 		if errsql != nil {
 			panic(err)
 		}
@@ -140,7 +145,7 @@ func GetAllPermisoFecha(c *gin.Context) {
 	mes := c.Param("mes")
 	anio := c.Param("anio")
 
-	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador from permisos 
+	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador, calculadoenvacaciones, escargovacaciones from permisos 
 	inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
 	where identificacion = ?
 	order by idpermiso desc`
@@ -152,7 +157,7 @@ func GetAllPermisoFecha(c *gin.Context) {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador)
+		errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador, &d.Calculadoenvacaciones, &d.Escargovacaciones)
 		if errsql != nil {
 			panic(err)
 		}
@@ -202,7 +207,7 @@ func GetAllPermisosadmin(c *gin.Context) {
 	var d models.Permisos
 	var datos []models.Permisos
 
-	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador from permisos 
+	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador, calculadoenvacaciones, escargovacaciones from permisos 
 	inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
 	where estadojefe = 'SOLICITADO'
 	order by idpermiso desc`
@@ -214,7 +219,7 @@ func GetAllPermisosadmin(c *gin.Context) {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador)
+		errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador, &d.Calculadoenvacaciones, &d.Escargovacaciones)
 		if errsql != nil {
 			panic(err)
 		}
@@ -230,7 +235,7 @@ func GetAllPermisosadmin(c *gin.Context) {
 
 func AutorizarPermiso(c *gin.Context) {
 	idpermiso := c.Param("idpermiso")
-	usuario := c.Param("usuario")
+	usuario := c.Param("escargovacaciones")
 
 	query, err2 := conexion.SessionMysql.Prepare("update permisos set estadojefe = 'AUTORIZADO', autorizador = ? where idpermiso = ?")
 	if err2 != nil {
@@ -238,6 +243,20 @@ func AutorizarPermiso(c *gin.Context) {
 	}
 
 	query.Exec(usuario, idpermiso)
+
+	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
+}
+
+func EditEsCargoVacaciones(c *gin.Context) {
+	idpermiso := c.Param("idpermiso")
+	escargovacaciones := c.Param("escargovacaciones")
+
+	query, err2 := conexion.SessionMysql.Prepare("update permisos set escargovacaciones = ? where idpermiso = ?")
+	if err2 != nil {
+		panic(err2)
+	}
+
+	query.Exec(escargovacaciones, idpermiso)
 
 	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
 }
@@ -262,7 +281,7 @@ func GetAllPorestadoPermiso(c *gin.Context) {
 	var d models.Permisos
 	var datos []models.Permisos
 
-	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador from permisos 
+	query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador, calculadoenvacaciones, escargovacaciones from permisos 
 	inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
 	where estadojefe = ?
 	order by idpermiso desc`
@@ -274,7 +293,7 @@ func GetAllPorestadoPermiso(c *gin.Context) {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador)
+		errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador, &d.Calculadoenvacaciones, &d.Escargovacaciones)
 		if errsql != nil {
 			panic(err)
 		}
@@ -298,7 +317,7 @@ func GetPermisosFiltro(c *gin.Context) {
 	var query = ""
 
 	if estadojefe != "vacio" && identificacion != "vacio" {
-		query = `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador from permisos 
+		query = `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador, calculadoenvacaciones, escargovacaciones from permisos 
 		inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
 		where estadojefe = ? and identificacion = ?
 		order by idpermiso desc`
@@ -308,14 +327,14 @@ func GetPermisosFiltro(c *gin.Context) {
 		}
 		for filas.Next() {
 			contador++
-			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador)
+			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador, &d.Calculadoenvacaciones, &d.Escargovacaciones)
 			if errsql != nil {
 				panic(err)
 			}
 			datos = append(datos, d)
 		}
 	} else if estadojefe != "vacio" && identificacion == "vacio" {
-		query = `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador  from permisos 
+		query = `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador, calculadoenvacaciones, escargovacaciones from permisos 
 		inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
 		where estadojefe = ?
 		order by idpermiso desc`
@@ -325,14 +344,14 @@ func GetPermisosFiltro(c *gin.Context) {
 		}
 		for filas.Next() {
 			contador++
-			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador)
+			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador, &d.Calculadoenvacaciones, &d.Escargovacaciones)
 			if errsql != nil {
 				panic(err)
 			}
 			datos = append(datos, d)
 		}
 	} else if estadojefe == "vacio" && identificacion != "vacio" {
-		query = `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador from permisos 
+		query = `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador, calculadoenvacaciones, escargovacaciones from permisos 
 		inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
 		where identificacion = ?
 		order by idpermiso desc`
@@ -342,7 +361,7 @@ func GetPermisosFiltro(c *gin.Context) {
 		}
 		for filas.Next() {
 			contador++
-			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador)
+			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador, &d.Calculadoenvacaciones, &d.Escargovacaciones)
 			if errsql != nil {
 				panic(err)
 			}
@@ -364,7 +383,7 @@ func GetPermisosParaCalcularVacaciones(c *gin.Context) {
 	identificacion := c.Param("identificacion")
 
 	if obtenerLaFechaUltimaVacaciones(identificacion) != "" {
-		query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador from permisos 
+		query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador, calculadoenvacaciones, escargovacaciones from permisos 
 		inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
 		where estadojefe = 'AUTORIZADO' and identificacion = ? and str_to_date(left(desde,10), '%d-%m-%Y') > str_to_date(left(?,10), '%d-%m-%Y')`
 		filas, err := conexion.SessionMysql.Query(query, identificacion, obtenerLaFechaUltimaVacaciones(identificacion))
@@ -373,14 +392,14 @@ func GetPermisosParaCalcularVacaciones(c *gin.Context) {
 		}
 		for filas.Next() {
 			contador++
-			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador)
+			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador, &d.Calculadoenvacaciones, &d.Escargovacaciones)
 			if errsql != nil {
 				errorGeneral = err
 			}
 			datos = append(datos, d)
 		}
 	} else {
-		query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador  from permisos 
+		query := `select idpermiso, permisos.idtipopermiso, identificacion, desde, hasta, motivo, estadojefe, fechasolicitud, tiempoestimado, tipo, autorizador, calculadoenvacaciones, escargovacaciones  from permisos 
 		inner join tipopermiso on tipopermiso.idtipopermiso = permisos.idtipopermiso
 		where estadojefe = 'AUTORIZADO' and identificacion = ?`
 		filas, err := conexion.SessionMysql.Query(query, identificacion)
@@ -389,7 +408,7 @@ func GetPermisosParaCalcularVacaciones(c *gin.Context) {
 		}
 		for filas.Next() {
 			contador++
-			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador)
+			errsql := filas.Scan(&d.Idpermiso, &d.Idtipopermiso, &d.Identificacion, &d.Desde, &d.Hasta, &d.Motivo, &d.Estadojefe, &d.Fechasolicitud, &d.Tiempoestimado, &d.Tipo, &d.Autorizador, &d.Calculadoenvacaciones, &d.Escargovacaciones)
 			if errsql != nil {
 				errorGeneral = err
 			}
@@ -408,8 +427,12 @@ func GetPermisosParaCalcularVacaciones(c *gin.Context) {
 
 func obtenerLaFechaUltimaVacaciones(identificacion string) string {
 	var contador int = 0
-	var d models.Vacaciones
-	query := `SELECT idvacaciones, identificacion, cantidaddias, fechainicio, fechafin, estado, anio FROM vacaciones WHERE identificacion = ? ORDER BY idvacaciones desc LIMIT 1`
+	var d models.VacacionesDetalle
+	query := `
+			SELECT vacacionesdetalles.numerodia, vacacionesdetalles.mes, vacacionesdetalles.anio FROM vacacionesdetalles 
+		    inner join vacaciones on vacaciones.idvacaciones = vacacionesdetalles.idvacaciones
+		    WHERE vacaciones.identificacion = ? LIMIT 1
+	`
 
 	filas, err := conexion.SessionMysql.Query(query, identificacion)
 	if err != nil {
@@ -418,13 +441,13 @@ func obtenerLaFechaUltimaVacaciones(identificacion string) string {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&d.Idvacaciones, &d.Identificacion, &d.Cantidaddias, &d.Fechainicio, &d.Fechafin, &d.Estado, &d.Anio)
+		errsql := filas.Scan(&d.Numerodia, &d.Mes, &d.Anio)
 		if errsql != nil {
 			panic(err)
 		}
 	}
 	if contador > 0 {
-		return d.Fechafin
+		return fmt.Sprintf("%s-%s-%s", d.Numerodia, d.Mes, d.Anio)
 	} else {
 		return ""
 	}

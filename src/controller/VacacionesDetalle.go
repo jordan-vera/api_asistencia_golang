@@ -44,7 +44,7 @@ func GetVacacionesDetalleAll(c *gin.Context) {
 
 	query := `
 	            SELECT 
-				    vacaciones.idvacaciones, vacaciones.identificacion, vacaciones.cantidaddias, vacaciones.fechainicio, vacaciones.fechafin, vacaciones.estado, vacacionesdetalles.numerodia, vacacionesdetalles.mes, vacacionesdetalles.anio
+				    vacaciones.idvacaciones, vacaciones.identificacion, vacaciones.cantidaddias, vacaciones.estado, vacacionesdetalles.numerodia, vacacionesdetalles.mes, vacacionesdetalles.anio
 				FROM vacaciones 
 				INNER JOIN vacacionesdetalles ON vacacionesdetalles.idvacaciones = vacaciones.idvacaciones 
 				WHERE vacacionesdetalles.anio = ? AND vacacionesdetalles.mes = ?;`
@@ -56,7 +56,7 @@ func GetVacacionesDetalleAll(c *gin.Context) {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&d.Idvacaciones, &d.Identificacion, &d.Cantidaddias, &d.Fechainicio, &d.Fechafin, &d.Estado, &d.Numerodia, &d.Mes, &d.Anio)
+		errsql := filas.Scan(&d.Idvacaciones, &d.Identificacion, &d.Cantidaddias, &d.Estado, &d.Numerodia, &d.Mes, &d.Anio)
 		if errsql != nil {
 			panic(err)
 		}
@@ -81,7 +81,7 @@ func GetVacacionesDetalleAllIdentificacion(c *gin.Context) {
 
 	query := `
 	            SELECT 
-				    vacaciones.idvacaciones, vacaciones.identificacion, vacaciones.cantidaddias, vacaciones.fechainicio, vacaciones.fechafin, vacaciones.estado, vacacionesdetalles.numerodia, vacacionesdetalles.mes, vacacionesdetalles.anio
+				    vacaciones.idvacaciones, vacaciones.identificacion, vacaciones.cantidaddias, vacaciones.estado, vacacionesdetalles.numerodia, vacacionesdetalles.mes, vacacionesdetalles.anio
 				FROM vacaciones 
 				INNER JOIN vacacionesdetalles ON vacacionesdetalles.idvacaciones = vacaciones.idvacaciones 
 				WHERE vacacionesdetalles.anio = ? AND vacacionesdetalles.mes = ? AND vacaciones.identificacion = ?;`
@@ -93,7 +93,7 @@ func GetVacacionesDetalleAllIdentificacion(c *gin.Context) {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&d.Idvacaciones, &d.Identificacion, &d.Cantidaddias, &d.Fechainicio, &d.Fechafin, &d.Estado, &d.Numerodia, &d.Mes, &d.Anio)
+		errsql := filas.Scan(&d.Idvacaciones, &d.Identificacion, &d.Cantidaddias, &d.Estado, &d.Numerodia, &d.Mes, &d.Anio)
 		if errsql != nil {
 			panic(err)
 		}
@@ -105,4 +105,30 @@ func GetVacacionesDetalleAllIdentificacion(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
 	}
+}
+
+func EliminarDetallesVacaciones(c *gin.Context) {
+	idvacaciones := c.Param("idvacaciones")
+
+	query, err := conexion.SessionMysql.Prepare("DELETE FROM vacacionesdetalles WHERE idvacaciones = ?")
+	if err != nil {
+		panic(err)
+	}
+
+	query.Exec(idvacaciones)
+
+	c.JSON(http.StatusCreated, gin.H{"status": http.StatusCreated, "message": "registro eliminado!"})
+}
+
+func EliminarDetallesVacacionesOne(c *gin.Context) {
+	iddetallevacaciones := c.Param("iddetallevacaciones")
+
+	query, err := conexion.SessionMysql.Prepare("DELETE FROM vacacionesdetalles WHERE iddetallevacaciones = ?")
+	if err != nil {
+		panic(err)
+	}
+
+	query.Exec(iddetallevacaciones)
+
+	c.JSON(http.StatusCreated, gin.H{"status": http.StatusCreated, "message": "registro eliminado!"})
 }

@@ -23,7 +23,6 @@ func Login(c *gin.Context) {
 	query := `select codigo, nombre, Seguridades.Usuario.estaActivo, secuencialOficina, secuencialPersona, Persona.identificacion from Seguridades.Usuario
 		INNER JOIN Seguridades.Usuario_Complemento ON Seguridades.Usuario_Complemento.codigoUsuario = Seguridades.Usuario.codigo
 		INNER JOIN Personas.Persona ON Persona.secuencial = Usuario_Complemento.secuencialPersona
-		INNER JOIN Seguridades.UsuarioRol ON Seguridades.UsuarioRol.codigoUsuario = Seguridades.Usuario.codigo
 		WHERE Seguridades.Usuario.codigo = @user AND Seguridades.Usuario_Complemento.clave = UPPER(sys.fn_varbintohexsubstring(0, HashBytes('SHA1',CAST(Seguridades.Usuario.codigo + @clave AS VARCHAR)),1,0)) ;
 		`
 	filas, errsql := conexion.Session.Query(query, sql.Named("user", usuario), sql.Named("clave", clave))
@@ -162,6 +161,7 @@ func GetEmpleadosSinVacaciones(c *gin.Context) {
 		if errsql != nil {
 			panic(err)
 		}
+
 		if verificarSiTieneAsignadaVacaciones(d.Identificacion, anio) == false {
 			datos = append(datos, d)
 		}
@@ -279,21 +279,23 @@ func GetEmpleadoConVacacionesIdentificacion(c *gin.Context) {
 	}
 }
 
-func obtenerVacacionesY_Detalle(identificacion string) models.VacacionesDetalleFilter {
+func obtenerVacacionesY_Detalle(identificacion string) []models.VacacionesDetalleFilter {
 	var data models.VacacionesDetalleFilter
-	query := `SELECT idvacaciones, identificacion, cantidaddias, fechainicio, fechafin, estado, anio FROM vacaciones where identificacion = ?`
+	var datos []models.VacacionesDetalleFilter
+	query := `SELECT idvacaciones, identificacion, cantidaddias, estado, anio FROM vacaciones where identificacion = ?`
 	filas, err := conexion.SessionMysql.Query(query, identificacion)
 	if err != nil {
 		panic(err)
 	}
 	for filas.Next() {
-		errsql := filas.Scan(&data.Idvacaciones, &data.Identificacion, &data.Cantidaddias, &data.Fechainicio, &data.Fechafin, &data.Estado, &data.Anio)
+		errsql := filas.Scan(&data.Idvacaciones, &data.Identificacion, &data.Cantidaddias, &data.Estado, &data.Anio)
 		if errsql != nil {
 			panic(err)
 		}
 		data.Detalle = obtenerDetalleVacaciones(data.Idvacaciones)
+		datos = append(datos, data)
 	}
-	return data
+	return datos
 }
 
 func obtenerDetalleVacaciones(idvacaciones int) []models.VacacionesDetalle {

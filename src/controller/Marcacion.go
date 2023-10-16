@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"strings"
 
@@ -31,6 +32,24 @@ func AgregarMarcacion(c *gin.Context) {
 
 		sqlQ.Exec(data.IDASISTENCIA, global.HoraActual(), data.TIPO, data.IDSUCURSAL, data.IMAGEN)
 	}
+
+	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
+}
+
+func NuevaMarcacionParaEdit(c *gin.Context) {
+	var data models.Marcaciones
+
+	err := c.ShouldBindJSON(&data)
+	if err != nil {
+		panic(err)
+	}
+
+	sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO marcaciones (IDASISTENCIA, HORA, TIPO, IDSUCURSAL, IMAGEN) VALUES (?,?,?,?,?)")
+	if err2 != nil {
+		panic(err2)
+	}
+
+	sqlQ.Exec(data.IDASISTENCIA, data.HORA, data.TIPO, data.IDSUCURSAL, data.IMAGEN)
 
 	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
 }
@@ -141,73 +160,179 @@ func GetMarcacionesHoy(c *gin.Context) {
 	}
 }
 
-func RealizarMarcacion(c *gin.Context) {
+func RealizarMarcacionGeneral(c *gin.Context) {
+	var resultadoHttp string = ""
+	var data models.Marcaciones
+	err := c.ShouldBindJSON(&data)
+	if err != nil {
+		panic(err)
+	}
 
 	identificacion := c.Param("identificacion")
 
-	// verifica si tiene mas de una marcacion
+	// verifica si tiene creada una asistencia
 	if verificarSiEsPrimeraAsistenciaMarcacion(identificacion) == true {
-		//tiene mas de una marcación
 		idasistencia := obtenerIdAsistencia(identificacion)
 		tipoMarcacion := verificarQueTipoMarcacionCorresponde(idasistencia)
 
-		// si tiene horario de almuerzo
-		if verificarSiTieneHorarioAlmuerzoParametrizado(identificacion) {
-			horarioalmuerzoOne := obtenerHorarioDelAlmuerzo(identificacion)
+		if global.NombreDia() == "sábado" || global.NombreDia() == "domingo" {
+			if tipoMarcacion == "Error" {
+				if verificarSiYaTieneBloqueo(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
+					if verificarSiElBloqueoEstaAutorizado(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
+						crearMarcacion(identificacion, "ENTRADA", data.IDSUCURSAL, data.IMAGEN, data.FILE)
+						resultadoHttp = "HECHO"
+					} else {
+						resultadoHttp = "BLOQUEADO"
+					}
+				}
+			} else {
+				if tipoMarcacion == "SALIDA-DEL-ALMUERZO" {
+					crearMarcacion(identificacion, "SALIDA", data.IDSUCURSAL, data.IMAGEN, data.FILE)
+					resultadoHttp = "HECHO"
+				} else {
+					resultadoHttp = "YA TIENES TODAS LAS MARCACIONES"
+				}
 
-		} else if verificarQueTipoMarcacionCorresponde(idasistencia) == "MARCACIONES-COMPLETAS" {
-			// ya tiene todas las marcaciones
-
+			}
 		} else {
-			// no tiene horario de almuerzo
+			if tipoMarcacion == "Error" {
+				if verificarSiYaTieneBloqueo(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
+					if verificarSiElBloqueoEstaAutorizado(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
+						crearMarcacion(identificacion, "ENTRADA", data.IDSUCURSAL, data.IMAGEN, data.FILE)
+						resultadoHttp = "HECHO"
+					} else {
+						resultadoHttp = "BLOQUEADO"
+					}
+				}
+			} else {
+				tipo := ""
+				if tipoMarcacion == "SALIDA-DEL-ALMUERZO" {
+					tipo = "SALIDA"
+				} else if tipoMarcacion == "ENTRADA-DEL-ALMUERZO" {
+					tipo = "ENTRADA"
+				} else if tipoMarcacion == "SALIDA-A-CASA" {
+					tipo = "SALIDA"
+				}
 
+				// si tiene horario de almuerzo
+
+				if verificarSiTieneHorarioAlmuerzoParametrizado(identificacion) {
+					horarioalmuerzoOne := obtenerHorarioDelAlmuerzo(identificacion)
+					estaDentroDelRango := calcularSiEstaEnElRangoHorario(tipoMarcacion, horarioalmuerzoOne)
+					if verificarQueTipoMarcacionCorresponde(idasistencia) == "MARCACIONES-COMPLETAS" {
+						resultadoHttp = "YA TIENES TODAS LAS MARCACIONES"
+					} else if estaDentroDelRango == true {
+						crearMarcacion(identificacion, tipo, data.IDSUCURSAL, data.IMAGEN, data.FILE)
+						resultadoHttp = "HECHO"
+					} else {
+						resultadoHttp = "MARCACIÓN FUERA DEL RANGO DEL HORARIO ESTABLECIDO"
+					}
+				} else {
+					if tipo != "" {
+						crearMarcacion(identificacion, tipo, data.IDSUCURSAL, data.IMAGEN, data.FILE)
+						resultadoHttp = "HECHO"
+					} else {
+						resultadoHttp = "SOLO SE PERMITEN 4 MARCACIONES"
+					}
+				}
+			}
 		}
-
 	} else {
 		//crear asistencia y la primera marcacion, verificando que sea puntual
+		crearAsistencia(identificacion)
+		if verificarSiEstaPuntual() == true {
+			crearMarcacion(identificacion, "ENTRADA", data.IDSUCURSAL, data.IMAGEN, data.FILE)
+			resultadoHttp = "HECHO"
+		} else {
+			if verificarSiYaTieneBloqueo(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
+				if verificarSiElBloqueoEstaAutorizado(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
+					crearMarcacion(identificacion, "ENTRADA", data.IDSUCURSAL, data.IMAGEN, data.FILE)
+					resultadoHttp = "HECHO"
+				} else {
+					resultadoHttp = "BLOQUEADO"
+				}
+			} else {
+				sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO bloqueo (identificacion, dia, mes, anio, estado, hora, autorizador) VALUES (?,?,?,?,?,?,?)")
+				if err2 != nil {
+					panic(err2)
+				}
+
+				sqlQ.Exec(identificacion, global.NumDiaActual(), global.NumMesActual(), global.NumAnioActual(), 0, global.HoraActual(), "")
+				resultadoHttp = "BLOQUEADO"
+			}
+		}
+
+	}
+	c.JSON(http.StatusCreated, gin.H{"response": resultadoHttp})
+}
+
+func crearAsistencia(identificacion string) {
+	sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO asistencias (IDENTIFICACION, FECHA, MES, ANIO, DIA, NOMBREDIA, JUSTIFICACION, HORASJUSTIFICADAS) VALUES (?,?,?,?,?,?,?,?)")
+	if err2 != nil {
+		panic(err2)
+	}
+
+	sqlQ.Exec(identificacion, global.FechaActual(), global.NumMesActual(), global.NumAnioActual(), global.NumDiaActual(), global.NombreDia(), "", 0)
+}
+
+func crearMarcacion(identificacion string, tipo string, idsucursal int, imagen string, file string) {
+	idasistencia := obtenerIdAsistencia(identificacion)
+	if verificarSiMarcacionEsSeguida(idasistencia) == false {
+		saveimage(file, imagen)
+
+		sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO marcaciones (IDASISTENCIA, HORA, TIPO, IDSUCURSAL, IMAGEN) VALUES (?,?,?,?,?)")
+		if err2 != nil {
+			panic(err2)
+		}
+
+		sqlQ.Exec(idasistencia, global.HoraActual(), tipo, idsucursal, imagen)
 	}
 }
 
 func calcularSiEstaEnElRangoHorario(tipo string, horarioalmuerzo models.Horarioalmuerzo) bool {
-	horaActualSistema := global.NumHoraActual()
-	minutoActualSistema := global.NumMinutoActual()
-
-	var horaBD string = ""
-	var minutosBD string = ""
-
+	var result bool = false
 	if tipo == "SALIDA-DEL-ALMUERZO" {
-		horaBD := strings.Split(horarioalmuerzo.Salida, ":")[0]
-		minutosBD := strings.Split(horarioalmuerzo.Salida, ":")[1]
-		if horaActualSistema == horaBD {
-			if minutoActualSistema < (horaBD + 11) {
-
-			}
-		} else {
-			// fuera de rango
-		}
-	} else if tipo == "ENTRADA-DEL-ALMUERZO" {
-		horaGlobalBD = horarioalmuerzo.Salida
-	} else if tipo == "SALIDA-A-CASA" {
-		horaGlobalBD = horarioalmuerzo.Salidaacasa
-	}
-
-}
-
-/*
-if horaSistema <= horaBD {
-		if horaSistema == horaBD {
-			if minutoSistema <= minutosBD {
-				return true
+		diferencia := global.CalcularHora(horarioalmuerzo.Salida)
+		if global.EsPositivoNeutro(diferencia) == false {
+			if math.Abs(float64(diferencia)) <= 5 {
+				result = true
 			} else {
-				return false
+				result = false
 			}
 		} else {
-			return true
+			result = false
 		}
-	} else {
-		return false
+
+	} else if tipo == "ENTRADA-DEL-ALMUERZO" {
+		diferencia := global.CalcularHora(horarioalmuerzo.Entrada)
+		if global.EsPositivoNeutro(diferencia) == false {
+			if math.Abs(float64(diferencia)) <= 5 {
+				result = true
+			} else {
+				result = false
+			}
+		} else {
+			if diferencia <= 5 {
+				result = true
+			} else {
+				result = false
+			}
+		}
+	} else if tipo == "SALIDA-A-CASA" {
+		diferencia := global.CalcularHora(horarioalmuerzo.Salidaacasa)
+		if global.EsPositivoNeutro(diferencia) == false {
+			if math.Abs(float64(diferencia)) <= 15 {
+				result = true
+			} else {
+				result = false
+			}
+		} else {
+			result = false
+		}
 	}
-*/
+
+	return result
+}
 
 func obtenerHorarioDelAlmuerzo(identificacion string) models.Horarioalmuerzo {
 	var contador int = 0
@@ -310,4 +435,17 @@ func obtenerIdAsistencia(identificacion string) int {
 		}
 	}
 	return idasistencia
+}
+
+func EliminarMarcacion(c *gin.Context) {
+	idmarcacion := c.Param("idmarcacion")
+
+	query, err := conexion.SessionMysql.Prepare("DELETE FROM marcaciones WHERE IDMARCACION = ?")
+	if err != nil {
+		panic(err)
+	}
+
+	query.Exec(idmarcacion)
+
+	c.JSON(http.StatusCreated, gin.H{"status": http.StatusCreated, "message": "registro eliminado!"})
 }

@@ -25,5 +25,5 @@ type EmpleadosConVacacionesDetalle struct {
 	Identificacion    string `json:"identificacion"`
 	NombreUnido       string `json:"nombreUnido"`
 	SecuencialOficina string `json:"secuencialOficina"`
-	Vacaciones        VacacionesDetalleFilter
+	Vacaciones        []VacacionesDetalleFilter
 }

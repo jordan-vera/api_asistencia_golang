@@ -18,29 +18,25 @@ func AgregarVacaciones(c *gin.Context) {
 		panic(err)
 	}
 
-	if verificarSiTieneVacacionesEsteAnio(data.Identificacion, data.Anio) {
-		c.JSON(http.StatusCreated, gin.H{"error": "Ya tiene asignada vacaciones"})
+	sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO vacaciones (identificacion, cantidaddias, estado, anio) VALUES (?,?,?,?)")
+	if err2 != nil {
+		errorGeneral = err2
+	}
+
+	res, errorr := sqlQ.Exec(data.Identificacion, data.Cantidaddias, data.Estado, data.Anio)
+	if errorr != nil {
+		errorGeneral = errorr
+	}
+
+	idvacaciones, errId := res.LastInsertId()
+	if errId != nil {
+		errorGeneral = errId
+	}
+
+	if errorGeneral != nil {
+		c.JSON(http.StatusCreated, gin.H{"error": errorGeneral})
 	} else {
-		sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO vacaciones (identificacion, cantidaddias, fechainicio, fechafin, estado, anio) VALUES (?,?,?,?,?,?)")
-		if err2 != nil {
-			errorGeneral = err2
-		}
-
-		res, errorr := sqlQ.Exec(data.Identificacion, data.Cantidaddias, data.Fechainicio, data.Fechafin, data.Estado, data.Anio)
-		if errorr != nil {
-			errorGeneral = errorr
-		}
-
-		idvacaciones, errId := res.LastInsertId()
-		if errId != nil {
-			errorGeneral = errId
-		}
-
-		if errorGeneral != nil {
-			c.JSON(http.StatusCreated, gin.H{"error": errorGeneral})
-		} else {
-			c.JSON(http.StatusCreated, gin.H{"response": idvacaciones})
-		}
+		c.JSON(http.StatusCreated, gin.H{"response": idvacaciones})
 	}
 }
 
@@ -75,7 +71,7 @@ func GetVacacionesAll(c *gin.Context) {
 
 	anio := c.Param("anio")
 
-	query := `SELECT idvacaciones, identificacion, cantidaddias, fechainicio, fechafin, estado, anio FROM vacaciones WHERE anio = ?`
+	query := `SELECT idvacaciones, identificacion, cantidaddias, estado, anio FROM vacaciones WHERE anio = ?`
 
 	filas, err := conexion.SessionMysql.Query(query, anio)
 	if err != nil {
@@ -84,7 +80,7 @@ func GetVacacionesAll(c *gin.Context) {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&d.Idvacaciones, &d.Identificacion, &d.Cantidaddias, &d.Fechainicio, &d.Fechafin, &d.Estado, &d.Anio)
+		errsql := filas.Scan(&d.Idvacaciones, &d.Identificacion, &d.Cantidaddias, &d.Estado, &d.Anio)
 		if errsql != nil {
 			panic(err)
 		}
@@ -107,7 +103,7 @@ func GetVacacionesPorIdentificacion(c *gin.Context) {
 
 	query := `
 	            SELECT 
-				    idvacaciones, identificacion, cantidaddias, fechainicio, fechafin, estado, anio 
+				    idvacaciones, identificacion, cantidaddias, estado, anio 
 				FROM vacaciones 
 				WHERE identificacion = ?
 				ORDER BY idvacaciones DESC`
@@ -119,7 +115,7 @@ func GetVacacionesPorIdentificacion(c *gin.Context) {
 
 	for filas.Next() {
 		contador++
-		errsql := filas.Scan(&d.Idvacaciones, &d.Identificacion, &d.Cantidaddias, &d.Fechainicio, &d.Fechafin, &d.Estado, &d.Anio)
+		errsql := filas.Scan(&d.Idvacaciones, &d.Identificacion, &d.Cantidaddias, &d.Estado, &d.Anio)
 		if errsql != nil {
 			panic(err)
 		}
@@ -148,4 +144,22 @@ func getnombreEmpleado(identificacion string) string {
 		}
 	}
 	return nombre
+}
+
+func Updatevacaciones(c *gin.Context) {
+	var data models.Vacaciones
+
+	err := c.ShouldBindJSON(&data)
+	if err != nil {
+		panic(err)
+	}
+
+	query, err2 := conexion.SessionMysql.Prepare("update vacaciones set cantidaddias = ? where idvacaciones = ?")
+	if err2 != nil {
+		panic(err2)
+	}
+
+	query.Exec(data.Cantidaddias, data.Idvacaciones)
+
+	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
 }

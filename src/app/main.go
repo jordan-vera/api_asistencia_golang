@@ -46,9 +46,11 @@ func main() {
 		v1jwt.GET("empleados-sin-horarios-almuerzo", controller.GetEmpleadosConHorarioAlmuerzo)
 
 		v1jwt.POST("marcacion", controller.AgregarMarcacion)
+		v1jwt.POST("nueva-marcacion", controller.NuevaMarcacionParaEdit)
 		v1jwt.POST("marcacion-general/:identificacion", controller.RealizarMarcacionGeneral)
 		v1jwt.GET("ultima-marcacion/:idasistencia", controller.Getultimamarcacion)
 		v1jwt.GET("marcacioneshoy/:idasistencia", controller.GetMarcacionesHoy)
+		v1jwt.GET("marcacion-delete/:idmarcacion", controller.EliminarMarcacion)
 
 		v1jwt.GET("sucursales", controller.GetSucursal)
 		v1jwt.GET("sucursal/:idsucursal", controller.Getonesucursal)
@@ -74,6 +76,7 @@ func main() {
 		v1jwt.GET("permisos-estados/:estadojefe", controller.GetAllPorestadoPermiso)
 		v1jwt.GET("permisos-filtros/:estadojefe/:identificacion", controller.GetPermisosFiltro)
 		v1jwt.GET("permisos-para-calcular-vacaciones/:identificacion", controller.GetPermisosParaCalcularVacaciones)
+		v1jwt.GET("update-escargo-vacaciones/:idpermiso/:escargovacaciones", controller.EditEsCargoVacaciones)
 
 		v1jwt.GET("rostros", controller.GetAllRostros)
 		v1jwt.GET("rostro/:identificacion", controller.Getonerostros)
@@ -115,12 +118,15 @@ func main() {
 		v1jwt.GET("autorizar-bloqueo/:idbloqueo/:usuario", controller.AutorizarBloqueos)
 
 		v1jwt.POST("vacaciones", controller.AgregarVacaciones)
+		v1jwt.PUT("vacaciones", controller.Updatevacaciones)
 		v1jwt.GET("vacaciones/:anio", controller.GetVacacionesAll)
 		v1jwt.GET("vacaciones-por-empleado/:identificacion", controller.GetVacacionesPorIdentificacion)
 
 		v1jwt.POST("vacacionesdetalle", controller.AgregarVacacionesDetalle)
 		v1jwt.GET("vacacionesdetalle/:anio/:mes", controller.GetVacacionesDetalleAll)
 		v1jwt.GET("vacacionesdetalle-identificacion/:anio/:mes/:identificacion", controller.GetVacacionesDetalleAllIdentificacion)
+		v1jwt.GET("vacacionesdetalle-delete/:idvacaciones", controller.EliminarDetallesVacaciones)
+		v1jwt.GET("vacacionesdetalle-delete-one/:iddetallevacaciones", controller.EliminarDetallesVacacionesOne)
 
 		v1jwt.POST("horarioalmuerzo", controller.AgregarHorarioAlmuerzo)
 		v1jwt.GET("horarioalmuerzosall", controller.GetHorasAlmuerzo)
@@ -133,6 +139,7 @@ func main() {
 		v1jwt.GET("bloqueos-por-estado-fuerarango/:mes/:anio/:estado", controller.GetBloqueosFueraRanfoAllPorEstado)
 		v1jwt.GET("bloqueos-por-fecha-fuerarango/:mes/:anio/:dia", controller.GetBloqueosFueraRangoAllPorFecha)
 		v1jwt.GET("bloqueos-por-identificacion-mes-anio-fuerarango/:mes/:anio/:identificacion", controller.GetBloqueosFueraRangoIdentificacionMesAnio)
+
 	}
 
 	r.RunTLS(":8096", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/fullchain.pem", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/privkey.pem")

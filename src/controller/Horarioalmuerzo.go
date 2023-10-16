@@ -112,7 +112,6 @@ func buscarServicios(identificacion string) string {
 func GetHorasAlmuerzoPorIdentificacion(c *gin.Context) {
 	var contador int = 0
 	var d models.Horarioalmuerzo
-	var datos []models.Horarioalmuerzo
 	identificacion := c.Param("identificacion")
 
 	query := `SELECT idhorarioalmuerzo, entrada, salida, salida_a_casa, identificacion FROM horarioalmuerzo WHERE identificacion = ?`
@@ -128,11 +127,10 @@ func GetHorasAlmuerzoPorIdentificacion(c *gin.Context) {
 		if errsql != nil {
 			panic(err)
 		}
-		datos = append(datos, d)
 	}
 
 	if contador > 0 {
-		c.JSON(http.StatusCreated, gin.H{"response": datos})
+		c.JSON(http.StatusCreated, gin.H{"response": d})
 	} else {
 		c.JSON(http.StatusCreated, gin.H{"error": "No hay datos"})
 	}
