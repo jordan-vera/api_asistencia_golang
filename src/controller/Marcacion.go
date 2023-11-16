@@ -321,7 +321,7 @@ func calcularSiEstaEnElRangoHorario(tipo string, horarioalmuerzo models.Horarioa
 	} else if tipo == "SALIDA-A-CASA" {
 		diferencia := global.CalcularHora(horarioalmuerzo.Salidaacasa)
 		if global.EsPositivoNeutro(diferencia) == false {
-			if math.Abs(float64(diferencia)) <= 15 {
+			if math.Abs(float64(diferencia)) <= 5 {
 				result = true
 			} else {
 				result = false

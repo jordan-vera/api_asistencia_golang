@@ -384,19 +384,18 @@ func VerificarSiEsOficialCredito(c *gin.Context) {
 }
 
 func GetAsesores(c *gin.Context) {
-	codigouser := c.Param("codigouser")
 	var contador int = 0
 	var d models.Empleados
 	var datos []models.Empleados
 
 	query := `select identificacion, nombreUnido, secuencialOficina from Seguridades.Usuario
-	inner join Seguridades.UsuarioRol on UsuarioRol.codigoUsuario = Usuario.codigo
-	inner join Seguridades.Rol on Rol.codigo = UsuarioRol.codigoRol
-	INNER JOIN Seguridades.Usuario_Complemento ON Seguridades.Usuario_Complemento.codigoUsuario = Seguridades.Usuario.codigo
+			inner join Seguridades.UsuarioRol on UsuarioRol.codigoUsuario = Usuario.codigo
+			inner join Seguridades.Rol on Rol.codigo = UsuarioRol.codigoRol
+			INNER JOIN Seguridades.Usuario_Complemento ON Seguridades.Usuario_Complemento.codigoUsuario = Seguridades.Usuario.codigo
 			INNER JOIN Personas.Persona ON Persona.secuencial = Usuario_Complemento.secuencialPersona
-	where Rol.codigo = '005' and Rol.estaActivo = 1 and Usuario.estaActivo = 1 and UsuarioRol.estaActivo = 1`
+			where Rol.codigo = '005' and Rol.estaActivo = 1 and Usuario.estaActivo = 1 and UsuarioRol.estaActivo = 1`
 
-	filas, err := conexion.Session.Query(query, sql.Named("codigouser", codigouser))
+	filas, err := conexion.Session.Query(query)
 	if err != nil {
 		panic(err)
 	}

@@ -23,8 +23,17 @@ func AgregarAsistencia(c *gin.Context) {
 		panic(err2)
 	}
 
-	sqlQ.Exec(data.IDENTIFICACION, global.FechaActual(), data.MES, data.ANIO, data.DIA, data.NOMBREDIA, data.JUSTIFICACION, data.HORASJUSTIFICADAS)
-	c.JSON(http.StatusCreated, gin.H{"response": "hecho"})
+	res, errorr := sqlQ.Exec(data.IDENTIFICACION, global.FechaActual(), data.MES, data.ANIO, data.DIA, data.NOMBREDIA, data.JUSTIFICACION, data.HORASJUSTIFICADAS)
+	if errorr != nil {
+		panic(errorr)
+	}
+
+	idasistencia, errId := res.LastInsertId()
+	if errId != nil {
+		panic(errId)
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"response": idasistencia})
 }
 
 func Verificarsiexisteasistencia(c *gin.Context) {
@@ -90,7 +99,7 @@ func GetAsistenciasMarcacionesAllEmpleados(c *gin.Context) {
 
 	query := `select identificacion, nombreUnido from Personas.Persona
 	inner join Nomina.EMPLEADO on EMPLEADO.SECUENCIALPERSONANATURAL = Persona.secuencial
-	where EMPLEADO.CODIGOESTADOEMPLEADO = 'A' 
+	where EMPLEADO.CODIGOESTADOEMPLEADO = 'A' or identificacion = '0924666407'
 	order by nombreUnido asc`
 
 	filas, err := conexion.Session.Query(query)

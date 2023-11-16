@@ -145,5 +145,4 @@ func main() {
 	r.RunTLS(":8096", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/fullchain.pem", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/privkey.pem")
 
 	//r.Run(":8096")
-	//r.RunTLS(":8096", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/fullchain.pem", "/etc/letsencrypt/live/sistemflm.futurolamanense.fin.ec/privkey.pem")
 }
