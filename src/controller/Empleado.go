@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/jordan-vera/api_asistencia_golang/src/conexion"
+	"github.com/jordan-vera/api_asistencia_golang/src/global"
 	"github.com/jordan-vera/api_asistencia_golang/src/models"
 )
 
@@ -42,16 +43,72 @@ func Login(c *gin.Context) {
 		if verificarSiServicioProfesionalEstaActivo(u.Identificacion) == "inactivo" {
 			c.JSON(http.StatusAccepted, gin.H{"error": "No autorizado!!"})
 		} else if verificarSiServicioProfesionalEstaActivo(u.Identificacion) == "noexiste" || verificarSiServicioProfesionalEstaActivo(u.Identificacion) == "activo" {
-			token, err := createToken(2)
-			if err != nil {
-				panic(err)
+			if verificarSiEstaEnVacaciones(u.Identificacion, global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual()) {
+				c.JSON(http.StatusAccepted, gin.H{"error": "No puedes ingresar por que estas en vacaciones!!"})
+			} else {
+				token, err := createToken(2)
+				if err != nil {
+					panic(err)
+				}
+				c.JSON(http.StatusAccepted, gin.H{"empleado": u, "secuencialpersona": secuencialPersona, "token": token, "rol": verificarSiTieneRoles(u.Identificacion)})
 			}
-			c.JSON(http.StatusAccepted, gin.H{"empleado": u, "secuencialpersona": secuencialPersona, "token": token, "rol": verificarSiTieneRoles(u.Identificacion)})
 		}
 	} else {
 		c.JSON(http.StatusAccepted, gin.H{"error": "Contraseña Incorrecta!!"})
 	}
 
+}
+
+func verificarSiEstaEnVacaciones(identificacion string, anio int, mes int, dia int) bool {
+
+	var idvacaciones int = 0
+
+	query := `SELECT idvacaciones FROM vacaciones WHERE identificacion = ? AND anio = ?`
+
+	filas, err := conexion.SessionMysql.Query(query, identificacion, anio)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		errsql := filas.Scan(&idvacaciones)
+		if errsql != nil {
+			panic(err)
+		}
+	}
+
+	if idvacaciones != 0 {
+		if buscarEnDetalleVacaciones(idvacaciones, anio, mes, dia) {
+			return true
+		} else {
+			return false
+		}
+	} else {
+		return false
+	}
+}
+
+func buscarEnDetalleVacaciones(idvacaciones int, anio int, mes int, dia int) bool {
+	var count int = 0
+	query := `SELECT COUNT(*) FROM vacacionesdetalles WHERE idvacaciones = ? AND anio = ? AND mes = ? AND numerodia = ?`
+
+	filas, err := conexion.SessionMysql.Query(query, idvacaciones, anio, mes, dia)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		errsql := filas.Scan(&count)
+		if errsql != nil {
+			panic(err)
+		}
+	}
+
+	if count > 0 {
+		return true
+	} else {
+		return false
+	}
 }
 
 func verificarSiServicioProfesionalEstaActivo(identificacion string) string {

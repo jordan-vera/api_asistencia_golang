@@ -99,7 +99,7 @@ func GetAsistenciasMarcacionesAllEmpleados(c *gin.Context) {
 
 	query := `select identificacion, nombreUnido from Personas.Persona
 	inner join Nomina.EMPLEADO on EMPLEADO.SECUENCIALPERSONANATURAL = Persona.secuencial
-	where EMPLEADO.CODIGOESTADOEMPLEADO = 'A' or identificacion = '0924666407'
+	where EMPLEADO.CODIGOESTADOEMPLEADO = 'A'
 	order by nombreUnido asc`
 
 	filas, err := conexion.Session.Query(query)

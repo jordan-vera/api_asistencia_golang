@@ -181,7 +181,7 @@ func verificarSiEstaPuntual() bool {
 	horaBD := 0
 	minutosBD := 0
 	tipoDia := ""
-
+	//
 	var Dias = []string{"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"}
 
 	t, err := time.Parse("2006-01-02", global.FechaActual())

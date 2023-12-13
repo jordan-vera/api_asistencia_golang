@@ -2,11 +2,13 @@ package controller
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jordan-vera/api_asistencia_golang/src/conexion"
@@ -239,31 +241,82 @@ func RealizarMarcacionGeneral(c *gin.Context) {
 		}
 	} else {
 		//crear asistencia y la primera marcacion, verificando que sea puntual
-		crearAsistencia(identificacion)
-		if verificarSiEstaPuntual() == true {
-			crearMarcacion(identificacion, "ENTRADA", data.IDSUCURSAL, data.IMAGEN, data.FILE)
-			resultadoHttp = "HECHO"
-		} else {
-			if verificarSiYaTieneBloqueo(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
-				if verificarSiElBloqueoEstaAutorizado(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
-					crearMarcacion(identificacion, "ENTRADA", data.IDSUCURSAL, data.IMAGEN, data.FILE)
-					resultadoHttp = "HECHO"
+		if dentroRangoPrimeraMarcacion() {
+			crearAsistencia(identificacion)
+			if verificarSiEstaPuntual() == true {
+				crearMarcacion(identificacion, "ENTRADA", data.IDSUCURSAL, data.IMAGEN, data.FILE)
+				resultadoHttp = "HECHO"
+			} else {
+				if verificarSiYaTieneBloqueo(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
+					if verificarSiElBloqueoEstaAutorizado(global.NumAnioActual(), global.NumMesActual(), global.NumDiaActual(), identificacion) == true {
+						crearMarcacion(identificacion, "ENTRADA", data.IDSUCURSAL, data.IMAGEN, data.FILE)
+						resultadoHttp = "HECHO"
+					} else {
+						resultadoHttp = "BLOQUEADO"
+					}
 				} else {
+					sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO bloqueo (identificacion, dia, mes, anio, estado, hora, autorizador) VALUES (?,?,?,?,?,?,?)")
+					if err2 != nil {
+						panic(err2)
+					}
+
+					sqlQ.Exec(identificacion, global.NumDiaActual(), global.NumMesActual(), global.NumAnioActual(), 0, global.HoraActual(), "")
 					resultadoHttp = "BLOQUEADO"
 				}
-			} else {
-				sqlQ, err2 := conexion.SessionMysql.Prepare("INSERT INTO bloqueo (identificacion, dia, mes, anio, estado, hora, autorizador) VALUES (?,?,?,?,?,?,?)")
-				if err2 != nil {
-					panic(err2)
-				}
-
-				sqlQ.Exec(identificacion, global.NumDiaActual(), global.NumMesActual(), global.NumAnioActual(), 0, global.HoraActual(), "")
-				resultadoHttp = "BLOQUEADO"
 			}
+		} else {
+			resultadoHttp = "MARCACIÓN FUERA DEL RANGO DEL HORARIO ESTABLECIDO"
 		}
-
 	}
 	c.JSON(http.StatusCreated, gin.H{"response": resultadoHttp})
+}
+
+// ----------
+func dentroRangoPrimeraMarcacion() bool {
+	horaBD := 0
+	minutosBD := 0
+	tipoDia := ""
+	var result bool = false
+	var Dias = []string{"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"}
+
+	t, err := time.Parse("2006-01-02", global.FechaActual())
+	if err != nil {
+		panic(err)
+	}
+
+	dia := Dias[t.Weekday()]
+
+	if dia == "Sábado" || dia == "Domingo" {
+		tipoDia = "finsemana"
+	} else {
+		tipoDia = "entresemana"
+	}
+
+	query := `SELECT hora, minuto FROM horaentrada where tipo = ? LIMIT 1`
+	filas, err := conexion.SessionMysql.Query(query, tipoDia)
+	if err != nil {
+		panic(err)
+	}
+
+	for filas.Next() {
+		errsql := filas.Scan(&horaBD, &minutosBD)
+		if errsql != nil {
+			panic(err)
+		}
+	}
+
+	horaEntrada := fmt.Sprintf("%02d:00", horaBD)
+	diferencia := global.CalcularHora(horaEntrada)
+	// es negativo cuando es mayor a la hora de entrada
+	fmt.Println(diferencia)
+	if diferencia == 0 {
+		result = true
+	} else if diferencia < 0 && diferencia >= (-minutosBD) {
+		result = true
+	} else {
+		result = false
+	}
+	return result
 }
 
 func crearAsistencia(identificacion string) {

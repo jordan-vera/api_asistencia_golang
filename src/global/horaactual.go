@@ -47,6 +47,7 @@ func NumMinutoActual() int {
 	return t.Minute()
 }
 
+// retorna la diferencia en minutos
 func CalcularHora(hora string) int {
 	concatFecha := fmt.Sprintf("%s %s", FechaActual(), hora)
 	currentTime := time.Now()
@@ -60,6 +61,7 @@ func CalcularHora(hora string) int {
 
 	diff := pasttime.Sub(currentTime)
 
+	//return int(diff.Minutes())
 	return int(Roundf(diff.Minutes()))
 }
 
@@ -72,9 +74,7 @@ func Roundf(x float64) float64 {
 }
 
 func EsPositivoNeutro(numero int) bool {
-	if numero == 0 {
-		return true
-	} else if numero > 0 {
+	if numero >= 0 {
 		return true
 	} else {
 		return false
