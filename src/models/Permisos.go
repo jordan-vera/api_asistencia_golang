@@ -15,6 +15,7 @@ type Permisos struct {
 	Autorizador           string `json:"autorizador"`
 	Calculadoenvacaciones int    `json:"calculadoenvacaciones"`
 	Escargovacaciones     int    `json:"escargovacaciones"`
+	Horainiciopermiso     string `json:"horainiciopermiso"`
 }
 
 type Tipopermisos struct {
