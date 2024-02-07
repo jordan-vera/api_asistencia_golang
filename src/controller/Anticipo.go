@@ -28,12 +28,17 @@ func AgregarAnticipo(c *gin.Context) {
 
 func GetAnticiposPendientes(c *gin.Context) {
 
+	anio := c.Param("anio")
+
 	var d models.Anticipos
 	var datos []models.Anticipos
 
-	query := `select * from solicitud_anticipos_sueldos where estodogerente = 'PENDIENTE'`
+	query := `
+	            select * from solicitud_anticipos_sueldos 
+				where estodogerente = 'PENDIENTE' and anio = ?
+				order by idanticipo desc`
 
-	filas, err := conexion.SessionMysql.Query(query)
+	filas, err := conexion.SessionMysql.Query(query, anio)
 	if err != nil {
 		panic(err)
 	}
@@ -51,12 +56,16 @@ func GetAnticiposPendientes(c *gin.Context) {
 
 func GetAnticiposPorEstadoGerente(c *gin.Context) {
 	estado := c.Param("estado")
+	anio := c.Param("anio")
 	var d models.Anticipos
 	var datos []models.Anticipos
 
-	query := `select * from solicitud_anticipos_sueldos where estodogerente = ?`
+	query := `
+	            select * from solicitud_anticipos_sueldos 
+				where estodogerente = ? and anio = ?
+				order by idanticipo desc`
 
-	filas, err := conexion.SessionMysql.Query(query, estado)
+	filas, err := conexion.SessionMysql.Query(query, estado, anio)
 	if err != nil {
 		panic(err)
 	}
@@ -77,10 +86,14 @@ func GetAnticiposPorIdentificacion(c *gin.Context) {
 	var d models.Anticipos
 	var datos []models.Anticipos
 	identificacion := c.Param("identificacion")
+	anio := c.Param("anio")
 
-	query := `select * from solicitud_anticipos_sueldos where identificacion = ?`
+	query := `
+	            select * from solicitud_anticipos_sueldos 
+				where identificacion = ? and anio = ?
+				order by idanticipo desc`
 
-	filas, err := conexion.SessionMysql.Query(query, identificacion)
+	filas, err := conexion.SessionMysql.Query(query, identificacion, anio)
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +117,11 @@ func GetAnticiposPorIdentificacionMesAnio(c *gin.Context) {
 	mes := c.Param("mes")
 	anio := c.Param("anio")
 
-	query := `select * from solicitud_anticipos_sueldos where identificacion = ? and mes = ? and anio = ?`
+	query := `
+	            select * from solicitud_anticipos_sueldos 
+				where identificacion = ? and mes = ? and anio = ?
+				order by idanticipo desc
+			`
 
 	filas, err := conexion.SessionMysql.Query(query, identificacion, mes, anio)
 	if err != nil {
